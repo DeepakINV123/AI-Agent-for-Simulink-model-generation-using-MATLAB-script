@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI MATLAB Code Generator</title>
+</head>
+<body>
+    <h2>Enter Model Requirements</h2>
+    <textarea id="userPrompt" rows="5" cols="50"></textarea><br>
+    <button onclick="generateCode()">Generate MATLAB Code</button>
+    <button onclick="downloadCode()">Download MATLAB File</button>
+
+    <h3>Generated Code:</h3>
+    <pre id="matlabCode"></pre>
+
+    <script>
+        async function generateCode() {
+            let prompt = document.getElementById("userPrompt").value;
+    
+            try {
+                let response = await fetch("http://localhost:5000/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt })
+                });
+    
+                let data = await response.json();
+    
+                if (data.success) {
+                    document.getElementById("matlabCode").innerText = data.code;
+                } else {
+                    document.getElementById("matlabCode").innerText = "Error: " + data.error;
+                }
+            } catch (error) {
+                console.error("Request failed:", error);
+                document.getElementById("matlabCode").innerText = "Error: Server not responding.";
+            }
+        }
+    
+        function downloadCode() {
+            window.location.href = "http://localhost:5000/download";
+        }
+    </script>
+    
+</body>
+</html>
