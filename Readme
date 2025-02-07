@@ -1,0 +1,210 @@
+This project is about creating an AI Agent that is capable of writing MATLAB code for Simulink model.
+
+As of now I am learning MATLAB and have a lot to know about it.
+I have never made an AI agent before so this is my first time working with one and developing it. AI agent is nothing but using an AI model to develop something. AI models are good but they lack a few things: AI does not have the tendency of given real-time outputs that match with the world. Systems like temperature monitoring and require real-time data of the environment require a lot of computing which as of now Ai is not capable of doing. So to improve its functioning we hand over tools to AI models that use it give real time data. These models are known as AI agent.
+
+Here tools are nothing but javascript programs that compute or transfer data locally or through web services.
+Similarly there are few more use cases that I can think of as of now that can be applied using an AI agent, few a times we require AI to design datasets for computational purposes which are needed within a set of parameters and configurations. We don't have the time and capacity to remodel all the files in the database and share them according to them configuration sets. So for that purpose we can Prompt the AI agent with a default prompt before setting user prompt that specifies the AI to return the datasets of the designs using default parameters which is easy to cross check, verify, debug and download or share at the same time.
+
+
+
+To begin with we first have to an AI model that we can use for this purpose.
+Then select the interface where we can code.
+research about libraries and technologies required.
+And know its possible use cases.
+
+
+This project is completely open source and requires no payment of any sort.
+-->The model that we will be using 'Llama'. There are many other options like Openai and Gemini but there API's are paid. Api's are nothing but command that are used to run that specific model.
+-->Technology that we will be using is MATLAB/SIMULINK, you can get a student license which is free of cost.
+-->This project requires internet connectivity at all times.
+-->Frontend will be developed only using HTML for now, but you can improve it using CSS if needed, for now we are only looking for a working environment that satisfies are proof of concept.
+-->We would require node.js framework for backend.
+
+
+
+Step by step process to follow while designing:
+* First we install the VS code terminal. Make sure to install basic extensions necessary for javascript and HTML development.
+*Next download Node.js (https://nodejs.org/en). Click on Download Node.js LTS.
+*Once downloaded go to the downloads and setup the environment of node-v22.13.1-x64.msi using default settings. By default it would on powershell and setup up few files.
+*After the above step open the command prompt and type:
+>node -v
+>npm -v
+These commands are used for verification purposes.
+
+*Next go to Ollama and install it (https://ollama.co) for your OS. Then setup it in the downloads folder. After the setup, when the file are extracted, go to the command prompt and type
+>ollama run llama2
+After this many installations will prompt in the command prompt (pulling manifest...... till success).
+This runs the model on the command prompt locally. You can give any prompt in your Command Prompt and exchange information with the AI model.
+
+Use ctrl+D or ctrl+C to come out the interaction.
+
+*Then create a directory/folder where you will store all your files .js and .html and .m
+>mkdir ai_matlab_agent
+This will create a folder named "ai_matlab_agent".
+>cd ai_matlab_agent
+This will add the folder "ai_matlab_agent" to the path in command prompt.
+
+*Next to initialize the node.js framework we type:
+>npm -init -y
+The npm init will create the package.json and -y will store it with default parameters. Remember for this project we would not be changing anything in the package file.
+
+*Next install the desired packages by typing:
+>npm install express multer axios cors fs
+
+Express is a type of package used to create API for functions like downloading a file as we need a download option in our frontend to download the generated file.
+Multer is used for operations like upload and download
+Axios is used for API requests.
+CORS is used for backend communication with our javascript file.
+fs is used for saving files in a given format. Here we are saving the files in .m format. 
+
+MATLAB does not provide any API calling features for free that allows to design Simulink models right a way, so we would create Simulink.slx file usinh MATLAB file. Once this .m file is run on the MATLAB software it would automatically generate a .slx file.
+
+
+*Next go to the VS code and add the folder "ai_matlab_agent" to path. Now add a new file with name "server.js".
+server.js:
+
+const express = require("express");
+const fs = require("fs");
+const cors = require("cors");
+const axios = require("axios");
+const multer = require("multer");
+ 
+const app = express();
+app.use(express.json());
+app.use(cors());
+ 
+const PORT = 5000;
+ 
+async function generateMatlabCode(prompt) {
+    try {
+const response = await axios.post("http://localhost:11434/api/generate", {
+            model: "llama2",
+            prompt: `Write a correct MATLAB script to create a Simulink model with: ${prompt}.
+                     Ensure it follows MATLAB and Simulink syntax correctly.`,
+            stream: false
+        });
+ 
+        return response.data.response.trim();
+    } catch (error) {
+        console.error("Error calling Ollama:", error);
+        return "Error: AI model failed to generate MATLAB code.";
+    }
+}
+ 
+
+app.post("/generate", async (req, res) => {
+    const userPrompt = req.body.prompt;
+ 
+    try {
+        const matlabCode = await generateMatlabCode(userPrompt);
+ 
+        if (!matlabCode || matlabCode.startsWith("Error")) {
+            return res.status(500).json({ success: false, error: "AI failed to generate MATLAB code." });
+        }
+ 
+        const filename = __dirname + "/generated_model.m";
+        fs.writeFileSync(filename, matlabCode, "utf-8");
+ 
+        res.json({ success: true, filename, code: matlabCode });
+    } catch (error) {
+        res.status(500).json({ success: false, error: "Internal server error." });
+    }
+});
+
+
+app.get("/download", (req, res) => {
+    const filename = "generated_model.m";
+res.download(filename);
+});
+ 
+
+app.listen(PORT, () => {
+console.log(`Server running on http://localhost:${PORT}`);
+});
+
+
+
+
+*Remember that there is a difference between ' and `. We will be using both. You can know more about them on the internet. 
+
+*Now to activate the nodejs we use a command, remember that this step is really important. We are running this command in the VS code terminal. the Vs code terminal and Command prompt are both integrated, so writing command on command prompt or VS code terminal are the same thing. To open the VS code terminal type:
+>CTrl+`
+Once in the terminal type:
+>node server.js
+
+It should show an output saying "Server running on http://localhost:5000"
+
+*Now we will create a index.html file in the same folder "ai_matlab_agent"
+
+index.html:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI MATLAB Code Generator</title>
+</head>
+<body>
+    <h2>Enter Model Requirements</h2>
+    <textarea id="userPrompt" rows="5" cols="50"></textarea><br>
+    <button onclick="generateCode()">Generate MATLAB Code</button>
+    <button onclick="downloadCode()">Download MATLAB File</button>
+ 
+    <h3>Generated Code:</h3>
+    <pre id="matlabCode"></pre>
+ 
+    <script>
+        async function generateCode() {
+            let prompt = document.getElementById("userPrompt").value;
+    
+            try {
+let response = await fetch("http://localhost:5000/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt })
+                });
+    
+                let data = await response.json();
+    
+                if (data.success) {
+                    document.getElementById("matlabCode").innerText = data.code;
+                } else {
+                    document.getElementById("matlabCode").innerText = "Error: " + data.error;
+                }
+            } catch (error) {
+                console.error("Request failed:", error);
+                document.getElementById("matlabCode").innerText = "Error: Server not responding.";
+            }
+        }
+    
+        function downloadCode() {
+window.location.href = "http://localhost:5000/download";
+        }
+    </script>
+    
+</body>
+</html>
+
+
+*Once this is done remember that you need to create another file named "generated_code.m" in the same folder, in the VS code. This file needs to be empty. It is just for reference that the code will add the generated code in this file.
+
+*Once the file is created you need to save all your files and you will see that you have node_modules, generated_model.m, index.html, package-lock.json, package.json, server.js
+
+
+*You can then go to the command prompt and type the command:
+>curl -X http://localhost:11434/api/generate -H "Content-Type: application/json" -d "{\"model\": \"llama2\", \"prompt\": \"Write a MATLAB script to create a Simulink model with a PID controller.\", \"stream\": false}"
+
+This code is quite tricky and it should be entered in the command prompt to check whether you are receiving the response in the command prompt or not. If you are then its fine.
+Try running the index.html file on web. You will see that upon right clicking the index.html file in VS code open the file in web. But I don't find that a good thing as once the file is open in the web you can right click and inspect and go to the console where you will see that an extra code is being added to the index.html that interrupts you file to work in a proper way.
+So to open the index.html file go to the file manager on your PC and locate your index.html file in the "ai_matlab_agent" file and right click upon it to open it in chrome or any other web browser. You should not see any message on your web console while you inspect.
+
+
+*Try running the index.html file again every time you make any change. Sometimes after clicking the "Generate MATLAB Code" button we might see this the generated code place stating that: Error: The "data" argument must be of type string or an instance of buffer, TypedArray, or DataView. Received undefined.
+Her you need to make sure that your command:
+>node server.js
+is working in the VS code terminal.
+
+
+That's it your project is now complete.
